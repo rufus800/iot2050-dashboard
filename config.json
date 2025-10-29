@@ -1,0 +1,103 @@
+{
+  "plc": {
+    "host": "192.168.200.9",
+    "rack": 0,
+    "slot": 1,
+    "port": 102,
+    "cycletime_ms": 1000
+  },
+  "poll_interval_seconds": 2,
+  "home": {
+    "ALL_PUMPS_KWH": { "db": 39, "type": "REAL", "offset": 0 },
+    "TANK_WATER_LEVEL": { "db": 39, "type": "REAL", "offset": 4 },
+    "TANK_TEMPERATURE": { "db": 39, "type": "REAL", "offset": 8 }
+  },
+  "pumps": {
+    "pump1": {
+      "label": "PUMP 1",
+      "db": 39,
+      "ready": { "byte": 12, "bit": 0, "color": "#FFD700" },
+      "running": { "byte": 12, "bit": 1, "color": "#00FF00" },
+      "trip": { "byte": 12, "bit": 2, "color": "#FF0000" },
+      "pressure": { "type": "REAL", "offset": 14 },
+      "speed": { "type": "REAL", "offset": 18 }
+    },
+    "pump2": {
+      "label": "PUMP 2",
+      "db": 39,
+      "ready": { "byte": 22, "bit": 0, "color": "#FFD700" },
+      "running": { "byte": 22, "bit": 1, "color": "#00FF00" },
+      "trip": { "byte": 22, "bit": 2, "color": "#FF0000" },
+      "pressure": { "type": "REAL", "offset": 24 },
+      "speed": { "type": "REAL", "offset": 28 }
+    },
+    "pump3": {
+      "label": "PUMP 3",
+      "db": 39,
+      "ready": { "byte": 32, "bit": 0, "color": "#FFD700" },
+      "running": { "byte": 32, "bit": 1, "color": "#00FF00" },
+      "trip": { "byte": 32, "bit": 2, "color": "#FF0000" },
+      "pressure": { "type": "REAL", "offset": 34 },
+      "speed": { "type": "REAL", "offset": 38 }
+    },
+    "pump4": {
+      "label": "PUMP 4",
+      "db": 39,
+      "ready": { "byte": 42, "bit": 0, "color": "#FFD700" },
+      "running": { "byte": 42, "bit": 1, "color": "#00FF00" },
+      "trip": { "byte": 42, "bit": 2, "color": "#FF0000" },
+      "pressure": { "type": "REAL", "offset": 44 },
+      "speed": { "type": "REAL", "offset": 48 }
+    },
+    "pump5": {
+      "label": "PUMP 5",
+      "db": 39,
+      "ready": { "byte": 52, "bit": 0, "color": "#FFD700" },
+      "running": { "byte": 52, "bit": 1, "color": "#00FF00" },
+      "trip": { "byte": 52, "bit": 2, "color": "#FF0000" },
+      "pressure": { "type": "REAL", "offset": 54 },
+      "speed": { "type": "REAL", "offset": 58 }
+    },
+    "pump6": {
+      "label": "PUMP 6",
+      "db": 39,
+      "ready": { "byte": 62, "bit": 0, "color": "#FFD700" },
+      "running": { "byte": 62, "bit": 1, "color": "#00FF00" },
+      "trip": { "byte": 62, "bit": 2, "color": "#FF0000" },
+      "pressure": { "type": "REAL", "offset": 64 },
+      "speed": { "type": "REAL", "offset": 68 }
+    },
+    "pump7": {
+      "label": "PUMP 7",
+      "db": 39,
+      "ready": { "byte": 72, "bit": 0, "color": "#FFD700" },
+      "running": { "byte": 72, "bit": 1, "color": "#00FF00" },
+      "trip": { "byte": 72, "bit": 2, "color": "#FF0000" },
+      "pressure": { "type": "REAL", "offset": 74 },
+      "speed": { "type": "REAL", "offset": 78 }
+    },
+    "pump8": {
+      "label": "PUMP 8",
+      "db": 39,
+      "ready": { "byte": 82, "bit": 0, "color": "#FFD700" },
+      "running": { "byte": 82, "bit": 1, "color": "#00FF00" },
+      "trip": { "byte": 82, "bit": 2, "color": "#FF0000" },
+      "pressure": { "type": "REAL", "offset": 84 },
+      "speed": { "type": "REAL", "offset": 88 }
+    },
+    "pump9": {
+      "label": "PUMP 9",
+      "db": 39,
+      "ready": { "byte": 92, "bit": 0, "color": "#FFD700" },
+      "running": { "byte": 92, "bit": 1, "color": "#00FF00" },
+      "trip": { "byte": 92, "bit": 2, "color": "#FF0000" },
+      "pressure": { "type": "REAL", "offset": 94 },
+      "speed": { "type": "REAL", "offset": 98 }
+    }
+  },
+  "chillers": {
+    "chiller1": { "db": 24, "ready": { "byte": 0, "bit": 0 }, "running": { "byte": 0, "bit": 1 }, "trip": { "byte": 0, "bit": 2 } },
+    "chiller2": { "db": 25, "ready": { "byte": 0, "bit": 0 }, "running": { "byte": 0, "bit": 1 }, "trip": { "byte": 0, "bit": 2 } },
+    "chiller3": { "db": 26, "ready": { "byte": 0, "bit": 0 }, "running": { "byte": 0, "bit": 1 }, "trip": { "byte": 0, "bit": 2 } }
+  }
+}
