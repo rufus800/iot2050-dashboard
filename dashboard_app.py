@@ -445,16 +445,12 @@ app.layout = dbc.Container(
 # Home page layout generation
 def render_home():
     home = state["home"]
-    # convert tank level (meters) -> liters using tank cross-sectional area from config (m^2).
-    # If not configured, default area = 1.0 m^2 (1 m -> 1000 L).
     lvl_raw = home.get("level", "--")
-    try:
-        lvl_val = float(lvl_raw)
-        tank_area = float(cfg.get("home", {}).get("tank_area_m2", 1.0))
-        liters = lvl_val * tank_area * 1000.0
-        level_display = f"{liters:.0f} L"
-    except Exception:
-        level_display = f"{lvl_raw} --"
+    if lvl_raw == "--":
+        level_display = "--"
+    else:
+        level_display = f"{lvl_raw} L"
+
     cards = dbc.Row(
         [
             dbc.Col(
