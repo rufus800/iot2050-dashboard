@@ -445,6 +445,16 @@ app.layout = dbc.Container(
 # Home page layout generation
 def render_home():
     home = state["home"]
+    # convert tank level (meters) -> liters using tank cross-sectional area from config (m^2).
+    # If not configured, default area = 1.0 m^2 (1 m -> 1000 L).
+    lvl_raw = home.get("level", "--")
+    try:
+        lvl_val = float(lvl_raw)
+        tank_area = float(cfg.get("home", {}).get("tank_area_m2", 1.0))
+        liters = lvl_val * tank_area * 1000.0
+        level_display = f"{liters:.0f} L"
+    except Exception:
+        level_display = f"{lvl_raw} --"
     cards = dbc.Row(
         [
             dbc.Col(
@@ -452,7 +462,7 @@ def render_home():
                 md=4,
             ),
             dbc.Col(
-                dbc.Card(dbc.CardBody([html.H5("Tank Level", style={"color": "#ff7777"}), html.H2(f"{home.get('level','--')} m", style={"color": "#fff", "textShadow": "0 0 12px #ff0000"})]), style={"background": "#0b0b0b", "border": "1px solid rgba(255,0,0,0.08)", "borderRadius": "12px", "padding": "18px"}),
+                dbc.Card(dbc.CardBody([html.H5("Tank Level", style={"color": "#ff7777"}), html.H2(level_display, style={"color": "#fff", "textShadow": "0 0 12px #ff0000"})]), style={"background": "#0b0b0b", "border": "1px solid rgba(255,0,0,0.08)", "borderRadius": "12px", "padding": "18px"}),
                 md=4,
             ),
             dbc.Col(
