@@ -10,7 +10,8 @@
   "home": {
     "ALL_PUMPS_KWH": { "db": 39, "type": "REAL", "offset": 0 },
     "TANK_WATER_LEVEL": { "db": 39, "type": "REAL", "offset": 4 },
-    "TANK_TEMPERATURE": { "db": 39, "type": "REAL", "offset": 8 }
+    "TANK_TEMPERATURE": { "db": 39, "type": "REAL", "offset": 8 },
+    "ALARM": { "db": 39, "byte": 102, "bit": 0 }
   },
   "pumps": {
     "pump1": {
