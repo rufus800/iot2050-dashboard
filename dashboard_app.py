@@ -210,13 +210,11 @@ def plc_worker() -> None:
                     val = read_real_from_db(client, tmp_tag.get("db"), tmp_tag.get("offset"))
                     if val is not None:
                         state["home"]["temp"] = f"{val:.1f}"
-                
                 alarm_tag = home_cfg.get("ALARM")
                 if alarm_tag:
                     val = read_bool_from_db(client, alarm_tag.get("db"), alarm_tag.get("byte"), alarm_tag.get("bit"))
                     if val is not None:
                         state["home"]["alarm"] = val
-
                 state["home"]["ts"] = time.strftime("%d/%m/%Y %H:%M:%S")
 
             # Pumps
@@ -304,13 +302,16 @@ app.index_string = """
             .card:hover { transform: translateY(-5px); box-shadow: 0 12px 36px 0 rgba(0,0,0,0.45) !important; }
             .dark-theme-control { background-color: #1e1e1e !important; color: #ffffff !important; }
             .dark-theme-control text { fill: #ffffff !important; }
-            @keyframes flashing {
-                0% { opacity: 1; }
-                50% { opacity: 0.2; }
-                100% { opacity: 1; }
+            @keyframes flash {
+                0% { background-color: red; }
+                50% { background-color: #111111; }
+                100% { background-color: red; }
             }
-            .alarm-flashing {
-                animation: flashing 1s infinite;
+            .alarm-indicator {
+                width: 50px;
+                height: 50px;
+                border-radius: 50%;
+                animation: flash 1s infinite;
             }
         </style>
     </head>
@@ -460,51 +461,28 @@ app.layout = dbc.Container(
 # Home page layout generation
 def render_home():
     home = state["home"]
-    lvl_raw = home.get("level", "--")
-    if lvl_raw == "--":
-        level_display = "--"
-    else:
-        level_display = f"{lvl_raw} L"
-
-    alarm_indicator = []
-    if home.get("alarm"):
-        alarm_indicator.append(
-            dbc.Col(
-                dbc.Card(
-                    dbc.CardBody(
-                        [
-                            html.H5(
-                                "ALARM ACTIVE",
-                                style={"color": "#fff", "textAlign": "center", "fontWeight": "bold"},
-                            )
-                        ]
-                    ),
-                    className="alarm-flashing",
-                    style={"backgroundColor": "red", "border": "none", "marginBottom": "20px"},
-                ),
-                width=12,
-            )
-        )
-
     cards = dbc.Row(
         [
             dbc.Col(
                 dbc.Card(dbc.CardBody([html.H5("Total Energy", style={"color": "#ff7777"}), html.H2(f"{home.get('kwh','--')} kWh", style={"color": "#fff", "textShadow": "0 0 12px #ff0000"})]), style={"background": "#0b0b0b", "border": "1px solid rgba(255,0,0,0.08)", "borderRadius": "12px", "padding": "18px"}),
-                md=4,
+                md=3,
             ),
             dbc.Col(
-                dbc.Card(dbc.CardBody([html.H5("Tank Level", style={"color": "#ff7777"}), html.H2(level_display, style={"color": "#fff", "textShadow": "0 0 12px #ff0000"})]), style={"background": "#0b0b0b", "border": "1px solid rgba(255,0,0,0.08)", "borderRadius": "12px", "padding": "18px"}),
-                md=4,
+                dbc.Card(dbc.CardBody([html.H5("Tank Level", style={"color": "#ff7777"}), html.H2(f"{home.get('level','--')} Ltr", style={"color": "#fff", "textShadow": "0 0 12px #ff0000"})]), style={"background": "#0b0b0b", "border": "1px solid rgba(255,0,0,0.08)", "borderRadius": "12px", "padding": "18px"}),
+                md=3,
             ),
             dbc.Col(
                 dbc.Card(dbc.CardBody([html.H5("Temperature", style={"color": "#ff7777"}), html.H2(f"{home.get('temp','--')} °C", style={"color": "#fff", "textShadow": "0 0 12px #ff0000"})]), style={"background": "#0b0b0b", "border": "1px solid rgba(255,0,0,0.08)", "borderRadius": "12px", "padding": "18px"}),
-                md=4,
+                md=3,
+            ),
+            dbc.Col(
+                dbc.Card(dbc.CardBody([html.H5("Alarm", style={"color": "#ff7777"}), html.Div(className="alarm-indicator") if home.get("alarm") else html.Div("Inactive", style={"color":"#fff"})]), style={"background": "#0b0b0b", "border": "1px solid rgba(255,0,0,0.08)", "borderRadius": "12px", "padding": "18px"}),
+                md=3,
             ),
         ],
         style={"padding": "20px", "maxWidth": "1200px", "margin": "24px auto"},
     )
-    return html.Div([html.Div(style={"padding": "24px", "maxWidth": "1200px", "margin": "12px auto"}, children=[html.H3("System Overview", style={"color": "#ff3333", "textAlign": "center", "textShadow": "0 0 10px #ff0000"}), dbc.Row(alarm_indicator), cards, html.Div(f"Last updated: {home.get('ts','--')}", style={"color": "#aaa", "textAlign": "center", "marginTop": "6px"})])])
-
+    return html.Div([html.Div(style={"padding": "24px", "maxWidth": "1200px", "margin": "12px auto"}, children=[html.H3("System Overview", style={"color": "#ff3333", "textAlign": "center", "textShadow": "0 0 10px #ff0000"}), cards, html.Div(f"Last updated: {home.get('ts','--')}", style={"color": "#aaa", "textAlign": "center", "marginTop": "6px"})])])
 
 def render_pump(pkey: str):
     pdata = state["pumps"].get(pkey, {})
