@@ -493,7 +493,27 @@ def render_pump(pkey: str):
 def render_chillers():
     chcards = []
     for ckey, cinfo in state["chillers"].items():
-        chcards.append(dbc.Col(dbc.Card(dbc.CardBody([html.H5(ckey.upper(), style={"color": "#ff3333"}), html.Div([status_dot(cinfo.get("ready", False), "READY"), status_dot(cinfo.get("running", False), "RUNNING"), status_dot(cinfo.get("trip", False), "TRIP")]), html.Div(f"Last: {cinfo.get('ts','--')}", style={"color": "#999"})])), md=4))
+        chiller_cfg = cfg.get("chillers", {}).get(ckey, {})
+        chcards.append(
+            dbc.Col(
+                dbc.Card(
+                    dbc.CardBody(
+                        [
+                            html.H5(ckey.upper(), style={"color": "#ff3333"}),
+                            html.Div(
+                                [
+                                    status_dot(cinfo.get("ready", False), "READY", chiller_cfg.get("ready", {}).get("color")),
+                                    status_dot(cinfo.get("running", False), "RUNNING", chiller_cfg.get("running", {}).get("color")),
+                                    status_dot(cinfo.get("trip", False), "TRIP", chiller_cfg.get("trip", {}).get("color")),
+                                ]
+                            ),
+                            html.Div(f"Last: {cinfo.get('ts','--')}", style={"color": "#999"}),
+                        ]
+                    )
+                ),
+                md=4,
+            )
+        )
     return html.Div([html.Div(style={"padding": "24px", "maxWidth": "1200px", "margin": "12px auto"}, children=[html.H3("Chillers Overview", style={"color": "#ff3333", "textAlign": "center"}), dbc.Row(chcards, justify="center")])])
 
 def render_reports():

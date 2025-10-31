@@ -97,8 +97,23 @@
     }
   },
   "chillers": {
-    "chiller1": { "db": 24, "ready": { "byte": 0, "bit": 0 }, "running": { "byte": 0, "bit": 1 }, "trip": { "byte": 0, "bit": 2 } },
-    "chiller2": { "db": 25, "ready": { "byte": 0, "bit": 0 }, "running": { "byte": 0, "bit": 1 }, "trip": { "byte": 0, "bit": 2 } },
-    "chiller3": { "db": 26, "ready": { "byte": 0, "bit": 0 }, "running": { "byte": 0, "bit": 1 }, "trip": { "byte": 0, "bit": 2 } }
+    "chiller1": {
+      "db": 39,
+      "ready": { "byte": 102, "bit": 1, "color": "#FFD700" },
+      "running": { "byte": 102, "bit": 2, "color": "#00FF00" },
+      "trip": { "byte": 102, "bit": 3, "color": "#FF0000" }
+    },
+    "chiller2": {
+      "db": 39,
+      "ready": { "byte": 102, "bit": 4, "color": "#FFD700" },
+      "running": { "byte": 102, "bit": 5, "color": "#00FF00" },
+      "trip": { "byte": 102, "bit": 6, "color": "#FF0000" }
+    },
+    "chiller3": {
+      "db": 39,
+      "ready": { "byte": 102, "bit": 7, "color": "#FFD700" },
+      "running": { "byte": 103, "bit": 0, "color": "#00FF00" },
+      "trip": { "byte": 103, "bit": 1, "color": "#FF0000" }
+    }
   }
 }
