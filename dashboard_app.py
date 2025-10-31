@@ -493,7 +493,7 @@ def render_pump(pkey: str):
 def render_chillers():
     chcards = []
     for ckey, cinfo in state["chillers"].items():
-        chiller_cfg = cfg.get("chillers", {}).get(ckey, {})
+        cfg_cinfo = cfg.get("chillers", {}).get(ckey, {})
         chcards.append(
             dbc.Col(
                 dbc.Card(
@@ -502,14 +502,16 @@ def render_chillers():
                             html.H5(ckey.upper(), style={"color": "#ff3333"}),
                             html.Div(
                                 [
-                                    status_dot(cinfo.get("ready", False), "READY", chiller_cfg.get("ready", {}).get("color")),
-                                    status_dot(cinfo.get("running", False), "RUNNING", chiller_cfg.get("running", {}).get("color")),
-                                    status_dot(cinfo.get("trip", False), "TRIP", chiller_cfg.get("trip", {}).get("color")),
-                                ]
+                                    status_dot(cinfo.get("ready", False), "READY", cfg_cinfo.get("ready", {}).get("color")),
+                                    status_dot(cinfo.get("running", False), "RUNNING", cfg_cinfo.get("running", {}).get("color")),
+                                    status_dot(cinfo.get("trip", False), "TRIP", cfg_cinfo.get("trip", {}).get("color")),
+                                ],
+                                style={"display": "flex", "justifyContent": "space-between"},
                             ),
                             html.Div(f"Last: {cinfo.get('ts','--')}", style={"color": "#999"}),
                         ]
-                    )
+                    ),
+                    style={"background": "#0b0b0b", "border": "1px solid rgba(255,0,0,0.08)", "borderRadius": "12px", "padding": "18px"},
                 ),
                 md=4,
             )
