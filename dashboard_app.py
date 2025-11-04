@@ -1,18 +1,19 @@
 import io
 import json
+import logging
 import sqlite3
+import sys
 import threading
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, Optional
-
 import dash
 import dash_daq as daq
 import pandas as pd
 import plotly.graph_objects as go
 import snap7
-from dash import dash_table, dcc as dcc2, html, Input, Output
+from dash import dash_table, dcc as dcc2, html, Input, Output, State
 import dash_bootstrap_components as dbc
 from dash_iconify import DashIconify
 from snap7.util import get_real, get_bool
@@ -20,6 +21,8 @@ from snap7.util import get_real, get_bool
 # ---------------------
 # Load config.json
 # ---------------------
+logging.basicConfig(level=logging.INFO, stream=sys.stdout, format='%(asctime)s - %(levelname)s - %(message)s')
+
 CONFIG_FILE = Path("config.json")
 if not CONFIG_FILE.exists():
     raise SystemExit("config.json not found. Create it next to this script (see sample).")
@@ -117,9 +120,8 @@ def log_pump_data(pump_id: str, pdata: Dict[str, Any]) -> None:
                 ),
             )
             conn.commit()
-    except Exception:
-        # keep PLC loop robust; ignore DB errors
-        pass
+    except Exception as e:
+        logging.error(f"Failed to log pump data for {pump_id}: {e}")
 
 def log_pump_event(pump_id: str, event: str, pressure: Optional[float], speed: Optional[float]) -> None:
     """Insert a pump event (e.g. TRIP)."""
@@ -132,8 +134,8 @@ def log_pump_event(pump_id: str, event: str, pressure: Optional[float], speed: O
                 (ts, pump_id, event, pressure, speed),
             )
             conn.commit()
-    except Exception:
-        pass
+    except Exception as e:
+        logging.error(f"Failed to log pump event for {pump_id}: {e}")
 
 create_db()
 
@@ -439,7 +441,9 @@ def pump_card(pkey: str, pdata: Dict[str, Any]):
 # ---------------------
 app.layout = dbc.Container(
     fluid=True,
+    # Add interval component to trigger updates
     children=[
+        dcc2.Interval(id="interval-refresh", interval=POLL_INTERVAL * 1000, n_intervals=0),
         dcc2.Location(id="url", refresh=False),
         dbc.NavbarSimple(
             children=[
@@ -522,7 +526,7 @@ def render_reports():
     pump_options = [{"label": cfg["pumps"][k].get("label", k).upper(), "value": k} for k in pump_keys]
     pump_options.insert(0, {"label": "All Pumps", "value": "all"})
     today = datetime.utcnow().date()
-    return html.Div(style={"padding": "24px", "maxWidth": "1200px", "margin": "12px auto"}, children=[html.H3("Historical Reports", style={"color": "#ff3333", "textAlign": "center"}), dbc.Card(dbc.CardBody([dbc.Row([dbc.Col([html.Label("Pump", style={"color": "#ccc"}), dcc2.Dropdown(id="report-pump", options=pump_options, value="pump1")], md=3), dbc.Col([html.Label("Date range", style={"color": "#ccc"}), dcc2.DatePickerRange(id="report-range", start_date=(today - timedelta(days=1)).isoformat(), end_date=today.isoformat(), display_format="YYYY-MM-DD")], md=4), dbc.Col([html.Label("Quick", style={"color": "#ccc"}), dbc.Button("Yesterday", id="btn-yesterday", color="secondary", style={"marginRight": "8px"}), dbc.Button("Last 7 days", id="btn-7d", color="secondary")], md=3), dbc.Col([dbc.Button("Query", id="btn-query", color="primary"), dbc.Button("Download CSV", id="btn-download", color="success", style={"marginLeft": "8px"}), dcc2.Download(id="download-data")], md=2)]), html.Hr(), html.Div(id="report-results")]), style={"background": "#0b0b0b", "border": "1px solid rgba(255,0,0,0.06)", "borderRadius": "12px", "padding": "12px"})])
+    return html.Div(style={"padding": "24px", "maxWidth": "1200px", "margin": "12px auto"}, children=[html.H3("Historical Reports", style={"color": "#ff3333", "textAlign": "center"}), dbc.Card(dbc.CardBody([dbc.Row([dbc.Col([html.Label("Pump", style={"color": "#ccc"}), dcc2.Dropdown(id="report-pump", options=pump_options, value="all")], md=3), dbc.Col([html.Label("Date range", style={"color": "#ccc"}), dcc2.DatePickerRange(id="report-range", start_date=(today - timedelta(days=1)).isoformat(), end_date=today.isoformat(), display_format="YYYY-MM-DD")], md=4), dbc.Col([html.Label("Quick", style={"color": "#ccc"}), dbc.Button("Yesterday", id="btn-yesterday", color="secondary", style={"marginRight": "8px"}), dbc.Button("Last 7 days", id="btn-7d", color="secondary")], md=3), dbc.Col([dbc.Button("Query", id="btn-query", color="primary"), dbc.Button("Download CSV", id="btn-download", color="success", style={"marginLeft": "8px"}), dcc2.Download(id="download-data")], md=2)]), html.Hr(), html.Div(id="report-results")]), style={"background": "#0b0b0b", "border": "1px solid rgba(255,0,0,0.06)", "borderRadius": "12px", "padding": "12px"})])
 
 # Router callback
 @app.callback(Output("page-content", "children"), [Input("url", "pathname")])
@@ -538,8 +542,90 @@ def display_page(pathname: Optional[str]):
         return render_reports()
     return html.Div("Page not found", style={"color": "#fff"})
 
-# client-side interval refresh
-app.layout.children.append(dcc2.Interval(id="interval-refresh", interval=POLL_INTERVAL * 1000, n_intervals=0))
+# ---------------------
+# Callbacks for live data updates
+# ---------------------
+
+# Update home page cards
+@app.callback(
+    [
+        Output("home-kwh", "children"),
+        Output("home-level", "children"),
+        Output("home-temp", "children"),
+        Output("home-alarm", "children"),
+        Output("home-ts", "children"),
+    ],
+    [Input("interval-refresh", "n_intervals"), Input("url", "pathname")],
+)
+def update_home_cards(n, pathname):
+    if pathname not in ("/", "/home"):
+        return dash.no_update
+    home = state["home"]
+    alarm_indicator = html.Div(className="alarm-indicator") if home.get("alarm") else html.Div("Inactive", style={"color": "#fff"})
+    return (
+        f"{home.get('kwh','--')} kWh",
+        f"{home.get('level','--')} Ltr",
+        f"{home.get('temp','--')} °C",
+        alarm_indicator,
+        f"Last updated: {home.get('ts','--')}",
+    )
+
+# Update pump page components
+@app.callback(
+    [
+        Output("pump-page-content", "children"),
+        Output("pump-page-ts", "children"),
+    ],
+    [Input("interval-refresh", "n_intervals"), Input("url", "pathname")],
+    prevent_initial_call=True,
+)
+def update_pump_page(n, pathname):
+    if not pathname or not pathname.startswith("/pump/"):
+        return dash.no_update, dash.no_update
+    pkey = pathname.split("/pump/")[-1]
+    if pkey not in state["pumps"]:
+        return dash.no_update, dash.no_update
+
+    pdata = state["pumps"][pkey]
+    card = pump_card(pkey, pdata)
+    ts = f"Last update: {pdata.get('ts','--')}"
+    return card, ts
+
+# Update chiller page cards
+@app.callback(
+    Output("chillers-row", "children"),
+    [Input("interval-refresh", "n_intervals"), Input("url", "pathname")],
+)
+def update_chiller_cards(n, pathname):
+    if pathname != "/chillers":
+        return dash.no_update
+
+    chcards = []
+    for ckey, cinfo in state["chillers"].items():
+        cfg_cinfo = cfg.get("chillers", {}).get(ckey, {})
+        chcards.append(
+            dbc.Col(
+                dbc.Card(
+                    dbc.CardBody(
+                        [
+                            html.H5(ckey.upper(), style={"color": "#ff3333"}),
+                            html.Div(
+                                [
+                                    status_dot(cinfo.get("ready", False), "READY", cfg_cinfo.get("ready", {}).get("color")),
+                                    status_dot(cinfo.get("running", False), "RUNNING", cfg_cinfo.get("running", {}).get("color")),
+                                    status_dot(cinfo.get("trip", False), "TRIP", cfg_cinfo.get("trip", {}).get("color")),
+                                ],
+                                style={"display": "flex", "justifyContent": "space-between"},
+                            ),
+                            html.Div(f"Last: {cinfo.get('ts','--')}", style={"color": "#999"}),
+                        ]
+                    ),
+                    style={"background": "#0b0b0b", "border": "1px solid rgba(255,0,0,0.08)", "borderRadius": "12px", "padding": "18px"},
+                ),
+                md=4,
+            )
+        )
+    return chcards
 
 # ---------------------
 # Reports callbacks (query + download) (behavior preserved)
@@ -547,7 +633,7 @@ app.layout.children.append(dcc2.Interval(id="interval-refresh", interval=POLL_IN
 @app.callback(
     Output("report-results", "children"),
     [Input("btn-query", "n_clicks"), Input("btn-yesterday", "n_clicks"), Input("btn-7d", "n_clicks")],
-    [dash.dependencies.State("report-pump", "value"), dash.dependencies.State("report-range", "start_date"), dash.dependencies.State("report-range", "end_date")],
+    [State("report-pump", "value"), State("report-range", "start_date"), State("report-range", "end_date")],
 )
 def query_reports(n_query, n_yest, n_7d, pump, start_date, end_date):
     ctx = dash.callback_context
@@ -610,7 +696,7 @@ def query_reports(n_query, n_yest, n_7d, pump, start_date, end_date):
         parts.extend([html.Hr(), html.H5("Logged Events (Trips)", style={"color": "#ff7777"}), events_table])
     return html.Div(parts)
 
-@app.callback(Output("download-data", "data"), [Input("btn-download", "n_clicks")], [dash.dependencies.State("report-pump", "value"), dash.dependencies.State("report-range", "start_date"), dash.dependencies.State("report-range", "end_date")])
+@app.callback(Output("download-data", "data"), [Input("btn-download", "n_clicks")], [State("report-pump", "value"), State("report-range", "start_date"), State("report-range", "end_date")])
 def download_csv(n_clicks, pump, start_date, end_date):
     if not n_clicks:
         return dash.no_update
