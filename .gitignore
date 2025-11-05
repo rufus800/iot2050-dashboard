@@ -1,0 +1,11 @@
+# Python virtual environment
+# This directory contains all the installed packages and should not be in source control.
+.venv/
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# Application-specific data files
+# This database file changes during runtime.
+logs.db
