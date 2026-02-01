@@ -1198,4 +1198,4 @@ def download_pdf(n_clicks, pump, start_date, end_date):
 
 # run server
 if __name__ == "__main__":
-    app.run_server(host="0.0.0.0", port=8052, debug=False, threaded=True, use_reloader=False)
+    app.run(host="0.0.0.0", port=8052, debug=False, threaded=True, use_reloader=False)
