@@ -1,0 +1,9 @@
+flask<=2.2.3
+dash==2.10.0
+dash-bootstrap-components
+pandas
+plotly
+python-snap7
+dash-daq
+dash-iconify
+
